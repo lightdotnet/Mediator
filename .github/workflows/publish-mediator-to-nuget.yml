@@ -1,0 +1,36 @@
+name: Publish Mediator to Nuget.org
+
+on:
+  workflow_dispatch
+  
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v4
+      with:
+          dotnet-version: '9.x'
+
+    - name: Install dependencies
+      run: |
+        dotnet restore src/Mediator.Contracts/Mediator.Contracts.csproj
+        dotnet restore src/Mediator/Mediator.csproj
+
+    - name: Build
+      run: |
+        dotnet build src/Mediator.Contracts/Mediator.Contracts.csproj --configuration Release --no-restore
+        dotnet build src/Mediator/Mediator.csproj --configuration Release --no-restore
+
+    - name: Publish to Nuget.org
+      run: |
+        rm -rf nuget/
+
+        dotnet pack --no-build src/Mediator.Contracts/Mediator.Contracts.csproj --configuration Release --output nuget
+        dotnet pack --no-build src/Mediator/Mediator.csproj --configuration Release --output nuget
+
+        dotnet nuget push nuget/*.nupkg -k '${{ secrets.NUGET_API_KEY }}' --skip-duplicate -s https://api.nuget.org/v3/index.json
