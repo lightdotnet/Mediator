@@ -1,6 +1,6 @@
 ﻿namespace Light.Mediator
 {
-    public interface ICommand<TResponse> : IRequest<TResponse>
+    public interface ICommand<out TResponse> : IRequest<TResponse>
     { }
 
     public interface ICommandHandler<in TRequest, TResponse>
