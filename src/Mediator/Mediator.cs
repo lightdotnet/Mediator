@@ -15,7 +15,7 @@ namespace Light.Mediator
             _serviceProvider = serviceProvider;
         }
 
-        public async Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
+        public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
         {
             var requestType = request.GetType();
             var responseType = typeof(TResponse);
@@ -65,7 +65,7 @@ namespace Light.Mediator
                 };
             }
 
-            return await handlerDelegate(cancellationToken);
+            return handlerDelegate(cancellationToken);
         }
 
         public Task Publish(INotification notification, CancellationToken cancellationToken = default)

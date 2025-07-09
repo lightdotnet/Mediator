@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Light.Mediator
 {
-    public interface IRequest<TResponse>
+    public interface IRequest<out TResponse>
     { }
 
     public interface IRequestHandler<in TRequest, TResponse>
