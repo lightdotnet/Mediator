@@ -32,7 +32,7 @@ namespace Light.Mediator
                         request,
                         ct
                     }
-                )!;
+                );
                 return resultTask;
             };
 
@@ -60,7 +60,7 @@ namespace Light.Mediator
                             next,
                             ct
                         }
-                    )!;
+                    );
                     return resultTask;
                 };
             }
