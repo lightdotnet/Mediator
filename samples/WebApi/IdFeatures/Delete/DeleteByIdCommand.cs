@@ -14,7 +14,7 @@ internal class DeleteByIdCommandHandler(
         await Task.Yield(); // Simulate some async work
 
         await publisher.Publish(new Events.IdDeletedEvent(request.Id), cancellationToken);
-    
+
         return true;
     }
 }
