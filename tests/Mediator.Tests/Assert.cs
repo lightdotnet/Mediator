@@ -1,4 +1,4 @@
-﻿namespace Unit.Tests
+﻿namespace Mediator.Tests
 {
     internal class Assert
     {

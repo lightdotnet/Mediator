@@ -16,7 +16,7 @@ public class MediatorSendTests
 
         var response = await mediator.Send(new PingRequest("Hello"));
 
-        Assert.That(response.Reply, Is.EqualTo("Pong: Hello"));
+        NUnit.Framework.Assert.That(response.Reply, Is.EqualTo("Pong: Hello"));
     }
 
     // Send — no handler registered should throw
@@ -27,7 +27,7 @@ public class MediatorSendTests
 
         var mediator = new MediatorClass(provider);
 
-        Assert.ThrowsAsync<InvalidOperationException>(
+        NUnit.Framework.Assert.ThrowsAsync<InvalidOperationException>(
             () => mediator.Send(new PingRequest("test")));
     }
 }
