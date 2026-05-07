@@ -10,15 +10,17 @@ public class LoggingBehavior<TRequest, TResponse>(
         Func<CancellationToken, Task<TResponse>> next,
         CancellationToken cancellationToken)
     {
+        var traceId = Guid.NewGuid().ToString("N")[..8];
+
         var timer = System.Diagnostics.Stopwatch.StartNew();
 
-        logger.LogInformation("Handling {RequestType}", typeof(TRequest).FullName);
+        logger.LogInformation("[{traceId}] Handling {RequestType} with {@Request}", traceId, typeof(TRequest).FullName, request);
 
         var response = await next(cancellationToken);
 
         timer.Stop();
 
-        logger.LogInformation("Done handling {RequestType} in {ms}", typeof(TRequest).FullName, timer.ElapsedMilliseconds);
+        logger.LogInformation("[{traceId}] Done handling {RequestType} in {ms} with {@Response}", traceId, typeof(TRequest).FullName, timer.ElapsedMilliseconds, response);
 
         return response;
     }

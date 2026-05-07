@@ -3,6 +3,8 @@ using System.Reflection;
 using WebApi.Behaviors;
 using WebApi.IdFeatures.Add;
 using WebApi.IdFeatures.Delete;
+using WebApi.IdFeatures.Get;
+using WebApi.IdFeatures.Update;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,5 +41,15 @@ app.MapGet("/id/delete", (IMediator mediator) =>
     return mediator.Send(new DeleteByIdCommand(Guid.NewGuid().ToString()));
 })
 .WithName("DeleteId");
+
+app.MapGet("/flows", async (IMediator mediator) =>
+{
+    var id = await mediator.Send(new AddNewId.Command());
+    var update = await mediator.Send(new UpdateByIdCommand(id, "UpdatedValue"));
+    var get = await mediator.Send(new GetById.Query(id));
+
+    return get;
+})
+.WithName("Flows");
 
 app.Run();
