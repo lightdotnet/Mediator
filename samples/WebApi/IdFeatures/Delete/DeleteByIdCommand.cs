@@ -9,7 +9,7 @@ internal class DeleteByIdCommandHandler(
 {
     public async Task<bool> Handle(DeleteByIdCommand request, CancellationToken cancellationToken)
     {
-        logger.LogInformation("Deleting ID: {id}", request.Id);
+        logger.LogError("Deleting ID: {id}", request.Id);
 
         await Task.Yield(); // Simulate some async work
 
