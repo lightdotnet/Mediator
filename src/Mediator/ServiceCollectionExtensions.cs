@@ -7,52 +7,64 @@ namespace Light.Mediator
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddMediatorFromAssemblies(this IServiceCollection services, params Assembly[] assemblies)
+        public static IServiceCollection AddMediatorFromAssemblies(
+            this IServiceCollection services,
+            params Assembly[] assemblies)
         {
             if (assemblies is null || assemblies.Length == 0)
-            {
-                throw new Exception("At least one assembly must be provided.");
-            }
+                throw new ArgumentException("At least one assembly must be provided.", nameof(assemblies));
 
             services.AddTransient<Mediator>();
-
             services.AddTransient<IMediator>(sp => sp.GetRequiredService<Mediator>());
             services.AddTransient<ISender>(sp => sp.GetRequiredService<Mediator>());
             services.AddTransient<IPublisher>(sp => sp.GetRequiredService<Mediator>());
 
-            services.AddHandlers(typeof(IRequestHandler<,>), assemblies);
-            services.AddHandlers(typeof(INotificationHandler<>), assemblies);
+            // Scan assemblies once, filter by multiple handler interface types
+            var handlerInterfaceTypes = new[]
+            {
+                typeof(IRequestHandler<,>),
+                typeof(INotificationHandler<>),
+            };
+
+            var concreteTypes = assemblies
+                .SelectMany(a => a.GetTypes())
+                .Where(t => !t.IsAbstract && !t.IsInterface);
+
+            foreach (var type in concreteTypes)
+            {
+                foreach (var iface in type.GetInterfaces().Where(i => i.IsGenericType))
+                {
+                    var def = iface.GetGenericTypeDefinition();
+                    if (Array.IndexOf(handlerInterfaceTypes, def) >= 0)
+                        services.AddTransient(iface, type);
+                }
+            }
 
             return services;
         }
 
-        private static void AddHandlers(this IServiceCollection services, Type handlerInterfaceType, Assembly[] assemblies)
+        public static IServiceCollection AddBehaviors(
+            this IServiceCollection services,
+            params Type[] behaviorTypes)
         {
-            var handlerTypes = assemblies
-                .SelectMany(s => s.GetTypes())
-                .Where(type => !type.IsAbstract && !type.IsInterface)
-                .SelectMany(type => type.GetInterfaces()
-                    .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == handlerInterfaceType)
-                    .Select(i => new { Interface = i, Implementation = type }));
+            var lifetime = ServiceLifetime.Transient;
 
-            foreach (var handler in handlerTypes)
-            {
-                services.AddTransient(handler.Interface, handler.Implementation);
-            }
-        }
-
-        public static IServiceCollection AddBehaviors(this IServiceCollection services, params Type[] behaviorTypes)
-        {
             foreach (var behaviorType in behaviorTypes)
             {
-                var pipelineType = typeof(IPipelineBehavior<,>);
+                if (behaviorType.IsGenericTypeDefinition)
+                {
+                    services.Add(new ServiceDescriptor(typeof(IPipelineBehavior<,>), behaviorType, lifetime));
+                }
+                else
+                {
+                    var closedInterface = behaviorType
+                        .GetInterfaces()
+                        .FirstOrDefault(i => i.IsGenericType &&
+                                             i.GetGenericTypeDefinition() == typeof(IPipelineBehavior<,>))
+                        ?? throw new ArgumentException($"{behaviorType.Name} does not implement IPipelineBehavior<,>");
 
-                var descriptor = new ServiceDescriptor(
-                    pipelineType,
-                    behaviorType,
-                    ServiceLifetime.Transient);
-
-                services.Add(descriptor);
+                    services.Add(new ServiceDescriptor(closedInterface, behaviorType, lifetime));
+                }
             }
 
             return services;

@@ -7,7 +7,7 @@ public class LoggingBehavior<TRequest, TResponse>(
 {
     public async Task<TResponse> Handle(
         TRequest request,
-        Func<CancellationToken, Task<TResponse>> next,
+        RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {
         var traceId = Guid.NewGuid().ToString("N")[..4];
