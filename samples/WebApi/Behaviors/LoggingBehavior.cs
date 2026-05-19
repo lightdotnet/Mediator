@@ -10,7 +10,7 @@ public class LoggingBehavior<TRequest, TResponse>(
         Func<CancellationToken, Task<TResponse>> next,
         CancellationToken cancellationToken)
     {
-        var traceId = Guid.NewGuid().ToString("N")[..8];
+        var traceId = Guid.NewGuid().ToString("N")[..4];
 
         var timer = System.Diagnostics.Stopwatch.StartNew();
 
