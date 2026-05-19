@@ -19,7 +19,7 @@ namespace Light.Mediator.Wrappers
 
             foreach (var handler in handlers)
             {
-                await handler.Handle((TNotification)notification, ct);
+                await handler.Handle((TNotification)notification, ct).ConfigureAwait(false);
             }
         }
     }
