@@ -7,7 +7,7 @@ public class TestBehavior<TRequest, TResponse>(
 {
     public async Task<TResponse> Handle(
         TRequest request,
-        Func<CancellationToken, Task<TResponse>> next,
+        RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {
         logger.LogWarning("Handle request from TEST behavior");

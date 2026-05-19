@@ -11,7 +11,7 @@ namespace Light.Mediator.Wrappers
         Task<TResponse> ExecutePipeline(
             IRequest<TResponse> request,
             IServiceProvider sp,
-            Func<CancellationToken, Task<TResponse>> finalHandler,
+            RequestHandlerDelegate<TResponse> finalHandler,
             CancellationToken ct);
     }
 
@@ -21,12 +21,12 @@ namespace Light.Mediator.Wrappers
         public Task<TResponse> ExecutePipeline(
             IRequest<TResponse> request,
             IServiceProvider sp,
-            Func<CancellationToken, Task<TResponse>> finalHandler,
+            RequestHandlerDelegate<TResponse> finalHandler,
             CancellationToken ct)
         {
             var behaviors = sp.GetServices<IPipelineBehavior<TRequest, TResponse>>();
 
-            Func<CancellationToken, Task<TResponse>> pipeline = finalHandler;
+            RequestHandlerDelegate<TResponse> pipeline = finalHandler;
 
             foreach (var behavior in behaviors.Reverse())
             {
