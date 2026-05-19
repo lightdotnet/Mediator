@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using Light.Mediator.Wrappers;
+using System;
+using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,6 +10,15 @@ namespace Light.Mediator
     {
         private readonly IServiceProvider _serviceProvider;
 
+        private static readonly ConcurrentDictionary<Type, object> _handlerWrappers
+            = new ConcurrentDictionary<Type, object>();
+
+        private static readonly ConcurrentDictionary<Type, object> _behaviorWrappers
+            = new ConcurrentDictionary<Type, object>();
+
+        private static readonly ConcurrentDictionary<Type, INotificationHandlerWrapper> _notificationWrappers
+            = new ConcurrentDictionary<Type, INotificationHandlerWrapper>();
+
         public Mediator(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
@@ -18,67 +27,31 @@ namespace Light.Mediator
         public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
         {
             var requestType = request.GetType();
-            var responseType = typeof(TResponse);
 
-            var handlerType = typeof(IRequestHandler<,>).MakeGenericType(requestType, responseType);
+            var handlerWrapper = (IHandlerWrapper<TResponse>)_handlerWrappers.GetOrAdd(requestType, t =>
+                Activator.CreateInstance(
+                    typeof(HandlerWrapper<,>).MakeGenericType(t, typeof(TResponse)))!);
 
-            // The delegate that calls the handler directly
-            Func<CancellationToken, Task<TResponse>> handlerDelegate = ct =>
-            {
-                var resultTask = (Task<TResponse>)handlerType.InvokeHandleMethod(
-                    _serviceProvider,
-                    new object[]
-                    {
-                        request,
-                        ct
-                    }
-                );
-                return resultTask;
-            };
+            var behaviorWrapper = (IBehaviorWrapper<TResponse>)_behaviorWrappers.GetOrAdd(requestType, t =>
+                Activator.CreateInstance(
+                    typeof(BehaviorWrapper<,>).MakeGenericType(t, typeof(TResponse)))!);
 
-            // Find pipeline behaviors
-            var behaviorsType = typeof(IEnumerable<>).MakeGenericType(
-                typeof(IPipelineBehavior<,>).MakeGenericType(requestType, responseType));
+            return behaviorWrapper.ExecutePipeline(
+                request,
+                _serviceProvider,
+                FinalHandler,
+                cancellationToken);
 
-            var behaviors = (IEnumerable<object>)
-                (_serviceProvider.GetService(behaviorsType) ?? Enumerable.Empty<object>());
-
-            // Chain pipeline behaviors in reverse order
-            foreach (var behavior in behaviors.Reverse())
-            {
-                var behaviorType = behavior.GetType();
-
-                var next = handlerDelegate;
-
-                handlerDelegate = ct =>
-                {
-                    var resultTask = (Task<TResponse>)behaviorType.InvokeHandleMethod(
-                        behavior,
-                        new object[]
-                        {
-                            request,
-                            next,
-                            ct
-                        }
-                    );
-                    return resultTask;
-                };
-            }
-
-            return handlerDelegate(cancellationToken);
+            Task<TResponse> FinalHandler(CancellationToken ct) =>
+                handlerWrapper.Handle(request, _serviceProvider, ct);
         }
 
         public Task Publish(INotification notification, CancellationToken cancellationToken = default)
         {
-            return (Task)typeof(INotificationHandler<>)
-                .MakeGenericType(notification.GetType())
-                .InvokeHandleMethod(
-                    _serviceProvider,
-                    new object[]
-                    {
-                        notification,
-                        cancellationToken
-                    });
+            var wrapper = _notificationWrappers.GetOrAdd(notification.GetType(), t =>
+                (INotificationHandlerWrapper)Activator.CreateInstance(typeof(NotificationHandlerWrapper<>).MakeGenericType(t))!);
+
+            return wrapper.Publish(notification, _serviceProvider, cancellationToken);
         }
     }
 }

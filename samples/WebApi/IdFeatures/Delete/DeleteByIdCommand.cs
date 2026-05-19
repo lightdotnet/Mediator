@@ -11,7 +11,7 @@ internal class DeleteByIdCommandHandler(
     {
         logger.LogError("Deleting ID: {id}", request.Id);
 
-        await Task.Yield(); // Simulate some async work
+        //await Task.Yield(); // Simulate some async work
 
         await publisher.Publish(new Events.IdDeletedEvent(request.Id), cancellationToken);
 
