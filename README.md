@@ -2,7 +2,7 @@
 
 A lightweight, high-performance mediator library for .NET — implementing the Mediator pattern with CQRS support, pipeline behaviors, and notification publishing.
 
-[![NuGet](https://img.shields.io/nuget/v/Light.Mediator.svg)](https://www.nuget.org/packages/Light.Mediator)
+[![NuGet](https://img.shields.io/nuget/v/Light.Mediator.svg)](https://www.nuget.org/packages/Lightsoft.Mediator)
 [![.NET Standard](https://img.shields.io/badge/netstandard-2.1-blue.svg)]()
 
 ## ✨ Features
