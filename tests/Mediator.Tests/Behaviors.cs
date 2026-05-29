@@ -15,9 +15,7 @@ public class TrackingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest,
     }
 
     public async Task<TResponse> Handle(
-        TRequest request,
-        RequestHandlerDelegate<TResponse> next,
-        CancellationToken cancellationToken)
+        TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
         _log.Add($"{_name}:Before");
         var result = await next(cancellationToken);
@@ -30,27 +28,14 @@ public class ShortCircuitBehavior<TRequest, TResponse> : IPipelineBehavior<TRequ
     where TRequest : IRequest<TResponse>
 {
     private readonly TResponse _result;
-
     public ShortCircuitBehavior(TResponse result) => _result = result;
-
-    public Task<TResponse> Handle(
-        TRequest request,
-        RequestHandlerDelegate<TResponse> next,
-        CancellationToken cancellationToken)
-    {
-        // Never calls next - short-circuits the pipeline
-        return Task.FromResult(_result);
-    }
+    public Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken ct)
+        => Task.FromResult(_result);
 }
 
 public class ThrowingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
-    public Task<TResponse> Handle(
-        TRequest request,
-        RequestHandlerDelegate<TResponse> next,
-        CancellationToken cancellationToken)
-    {
-        throw new InvalidOperationException("Behavior exploded");
-    }
+    public Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken ct)
+        => throw new InvalidOperationException("Behavior exploded");
 }

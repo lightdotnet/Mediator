@@ -8,9 +8,7 @@ public class MediatorConstructorTests
     [Test]
     public void Constructor_NullServiceProvider_ShouldThrowArgumentNullException()
     {
-        var ex = Assert.ShouldThrow<ArgumentNullException>(
-            () => new MediatorClass(null!));
-
+        var ex = Assert.ShouldThrow<ArgumentNullException>(() => new MediatorClass(null!));
         Assert.ShouldBe(ex.ParamName, "serviceProvider");
     }
 
@@ -18,9 +16,7 @@ public class MediatorConstructorTests
     public void Constructor_ValidServiceProvider_ShouldCreateInstance()
     {
         var provider = new FakeServiceProvider();
-
         var mediator = new MediatorClass(provider);
-
         Assert.ShouldNotBeNull(mediator);
     }
 }

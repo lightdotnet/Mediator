@@ -5,7 +5,6 @@ namespace Mediator.Tests;
 public class TrackingNotificationHandler : INotificationHandler<SimpleNotification>
 {
     public List<string> Messages { get; } = new();
-
     public Task Handle(SimpleNotification notification, CancellationToken cancellationToken)
     {
         Messages.Add(notification.Message);

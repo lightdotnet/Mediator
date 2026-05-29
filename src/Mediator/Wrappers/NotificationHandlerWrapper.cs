@@ -27,7 +27,8 @@ namespace Light.Mediator.Wrappers
                 }
                 catch (Exception ex) when (!(ex is OperationCanceledException))
                 {
-                    exceptions ??= new List<Exception>();
+                    if (exceptions == null)
+                        exceptions = new List<Exception>();
                     exceptions.Add(ex);
                 }
             }

@@ -9,7 +9,9 @@ namespace Light.Mediator
         Task<TResponse> Handle(TRequest request, CancellationToken cancellationToken);
     }
 
-    public interface IRequestHandler<in TRequest> : IRequestHandler<TRequest, Unit>
+    public interface IRequestHandler<in TRequest>
         where TRequest : IRequest<Unit>
-    { }
+    {
+        Task Handle(TRequest request, CancellationToken cancellationToken);
+    }
 }

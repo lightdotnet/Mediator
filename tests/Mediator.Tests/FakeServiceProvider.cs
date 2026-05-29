@@ -1,6 +1,7 @@
-﻿namespace Mediator.Tests;
+using Light.Mediator;
 
-// Minimal fake IServiceProvider for tests — no DI container needed
+namespace Mediator.Tests;
+
 public class FakeServiceProvider : IServiceProvider
 {
     private readonly Dictionary<Type, List<object>> _services = new();
@@ -17,13 +18,19 @@ public class FakeServiceProvider : IServiceProvider
         return this;
     }
 
+    public FakeServiceProvider RegisterVoidHandler<TRequest>(IRequestHandler<TRequest> handler)
+        where TRequest : IRequest<Unit>
+    {
+        Register<IRequestHandler<TRequest>>(handler);
+        Register<IRequestHandler<TRequest, Unit>>(new VoidAdapter<TRequest>(handler));
+        return this;
+    }
+
     public object? GetService(Type serviceType)
     {
-        // Exact match trước
         if (_services.TryGetValue(serviceType, out var exact))
             return exact.Count == 1 ? exact[0] : exact;
 
-        // Handle IEnumerable<T>
         if (serviceType.IsGenericType &&
             serviceType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
         {
@@ -31,17 +38,36 @@ public class FakeServiceProvider : IServiceProvider
 
             if (_services.TryGetValue(elementType, out var list))
             {
-                // Tạo typed array T[] để cast không bị lỗi
                 var array = Array.CreateInstance(elementType, list.Count);
                 for (int i = 0; i < list.Count; i++)
                     array.SetValue(list[i], i);
                 return array;
             }
 
-            // Không có registration → trả về empty array
             return Array.CreateInstance(elementType, 0);
         }
 
         return null;
+    }
+
+    private class VoidAdapter<TRequest> : IRequestHandler<TRequest, Unit>
+        where TRequest : IRequest<Unit>
+    {
+        private readonly IRequestHandler<TRequest> _inner;
+        public VoidAdapter(IRequestHandler<TRequest> inner) => _inner = inner;
+
+        public Task<Unit> Handle(TRequest request, CancellationToken ct)
+        {
+            var task = _inner.Handle(request, ct);
+            if (task.IsCompletedSuccessfully)
+                return Unit.Task;
+            return Awaited(task);
+        }
+
+        private static async Task<Unit> Awaited(Task task)
+        {
+            await task.ConfigureAwait(false);
+            return Unit.Value;
+        }
     }
 }

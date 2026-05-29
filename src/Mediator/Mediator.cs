@@ -34,7 +34,6 @@ namespace Light.Mediator
 
             var requestType = request.GetType();
 
-            // TryGetValue first — avoids lambda allocation on cache hit (hot path)
             if (!_handlerWrappers.TryGetValue(requestType, out var cachedHandler))
             {
                 cachedHandler = _handlerWrappers.GetOrAdd(requestType,
@@ -68,7 +67,6 @@ namespace Light.Mediator
 
             var notificationType = notification.GetType();
 
-            // TryGetValue first — avoids lambda allocation on cache hit (hot path)
             if (!_notificationWrappers.TryGetValue(notificationType, out var wrapper))
             {
                 wrapper = _notificationWrappers.GetOrAdd(notificationType,

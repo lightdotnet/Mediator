@@ -26,16 +26,13 @@ namespace Light.Mediator.Wrappers
         {
             var behaviors = sp.GetServices<IPipelineBehavior<TRequest, TResponse>>();
 
-            // Materialize once to avoid multiple enumerations
             var array = behaviors is IPipelineBehavior<TRequest, TResponse>[] a
                 ? a
                 : behaviors.ToArray();
 
-            // Fast-path: no behaviors registered - skip pipeline entirely
             if (array.Length == 0)
                 return finalHandler(ct);
 
-            // Build pipeline in reverse order using index (avoids Reverse() allocation)
             RequestHandlerDelegate<TResponse> pipeline = finalHandler;
             for (int i = array.Length - 1; i >= 0; i--)
             {

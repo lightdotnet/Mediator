@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using NUnit.Framework;
-
 namespace Mediator.Tests
 {
     internal class Assert

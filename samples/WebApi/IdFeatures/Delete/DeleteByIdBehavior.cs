@@ -2,17 +2,17 @@
 
 public class DeleteByIdBehavior(
     ILogger<DeleteByIdBehavior> logger)
-    : IPipelineBehavior<DeleteByIdCommand, bool>
+    : IPipelineBehavior<DeleteByIdCommand>
 {
-    public Task<bool> Handle(
+    public Task<Unit> Handle(
         DeleteByIdCommand request,
-        RequestHandlerDelegate<bool> next,
+        RequestHandlerDelegate<Unit> next,
         CancellationToken cancellationToken)
     {
         logger.LogWarning("DeleteByIdBehavior: Deleting entity with Id: {Id}", request.Id);
 
-        //return Task.FromResult(true);
+        return Unit.Task;
 
-        return next(cancellationToken);
+        //return next(cancellationToken);
     }
 }

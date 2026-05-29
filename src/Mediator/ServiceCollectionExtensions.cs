@@ -1,3 +1,4 @@
+using Light.Mediator.Wrappers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
@@ -19,13 +20,11 @@ namespace Light.Mediator
                 throw new ArgumentException(
                     "At least one assembly must be provided.", nameof(assemblies));
 
-            // Register Mediator — idempotent via TryAdd
             services.TryAddTransient<Mediator>();
             services.TryAddTransient<IMediator>(sp => sp.GetRequiredService<Mediator>());
             services.TryAddTransient<ISender>(sp => sp.GetRequiredService<Mediator>());
             services.TryAddTransient<IPublisher>(sp => sp.GetRequiredService<Mediator>());
 
-            // Scan assemblies — use safe type loading
             var concreteTypes = assemblies
                 .SelectMany(GetLoadableTypes)
                 .Where(t => !t.IsAbstract && !t.IsInterface);
@@ -38,13 +37,19 @@ namespace Light.Mediator
 
                     if (def == typeof(IRequestHandler<,>))
                     {
-                        // Single handler per request type — TryAdd prevents duplicate
                         services.TryAddTransient(iface, type);
+                    }
+                    else if (def == typeof(IRequestHandler<>))
+                    {
+                        services.TryAddTransient(iface, type);
+
+                        var requestType = iface.GetGenericArguments()[0];
+                        var adapterInterface = typeof(IRequestHandler<,>).MakeGenericType(requestType, typeof(Unit));
+                        var adapterImpl = typeof(VoidRequestHandlerAdapter<>).MakeGenericType(requestType);
+                        services.TryAddTransient(adapterInterface, adapterImpl);
                     }
                     else if (def == typeof(INotificationHandler<>))
                     {
-                        // Multiple handlers per notification — allow all,
-                        // but prevent exact duplicate (same interface + same implementation)
                         if (!services.Any(d => d.ServiceType == iface
                                             && d.ImplementationType == type))
                         {

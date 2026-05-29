@@ -5,7 +5,7 @@ namespace Light.Mediator
         where TRequest : ICommand<TResponse>
     { }
 
-    public interface ICommandHandler<in TRequest> : ICommandHandler<TRequest, Unit>
+    public interface ICommandHandler<in TRequest> : IRequestHandler<TRequest>
         where TRequest : ICommand<Unit>
     { }
 }
