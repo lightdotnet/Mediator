@@ -2,7 +2,7 @@
 
 A lightweight, high-performance mediator library for .NET — implementing the Mediator pattern with CQRS support, pipeline behaviors, and notification publishing.
 
-[![NuGet](https://img.shields.io/nuget/v/Light.Mediator.svg)](https://www.nuget.org/packages/Light.Mediator)
+[![NuGet](https://img.shields.io/nuget/v/Lightsoft.Mediator.svg?label=Lightsoft.Mediator%20-%20nuget)](https://www.nuget.org/packages/Lightsoft.Mediator)
 [![.NET Standard](https://img.shields.io/badge/netstandard-2.1-blue.svg)]()
 
 ## ✨ Features
@@ -228,14 +228,14 @@ builder.Services.AddBehaviors(
 ## 🏗️ Project Structure
 
 ```
-Light.Mediator.Contracts/          ← Pure contracts, zero dependencies
+Mediator.Contracts/          ← Pure contracts, zero dependencies
 ├── ICommand.cs                     ICommand<T>, ICommand
 ├── INotification.cs                INotification
 ├── IQuery.cs                       IQuery<T>
 ├── IRequest.cs                     IRequest<T>, IRequest
 └── Unit.cs                         Unit struct
 
-Light.Mediator/                    ← Core + DI, depends on Contracts
+Mediator/                    ← Core + DI, depends on Contracts
 ├── Wrappers/                       Internal handler/behavior wrappers
 │   ├── BehaviorWrapper.cs
 │   ├── HandlerWrapper.cs
