@@ -1,4 +1,4 @@
-﻿using Light.Mediator.Wrappers;
+using Light.Mediator.Wrappers;
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
@@ -21,20 +21,32 @@ namespace Light.Mediator
 
         public Mediator(IServiceProvider serviceProvider)
         {
-            _serviceProvider = serviceProvider;
+            _serviceProvider = serviceProvider
+                ?? throw new ArgumentNullException(nameof(serviceProvider));
         }
 
-        public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
+        public Task<TResponse> Send<TResponse>(
+            IRequest<TResponse> request,
+            CancellationToken cancellationToken = default)
         {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
             var requestType = request.GetType();
 
-            var handlerWrapper = (IHandlerWrapper<TResponse>)_handlerWrappers.GetOrAdd(requestType, t =>
-                Activator.CreateInstance(
-                    typeof(HandlerWrapper<,>).MakeGenericType(t, typeof(TResponse)))!);
+            if (!_handlerWrappers.TryGetValue(requestType, out var cachedHandler))
+            {
+                cachedHandler = _handlerWrappers.GetOrAdd(requestType,
+                    t => CreateWrapper<object>(typeof(HandlerWrapper<,>), t, typeof(TResponse)));
+            }
+            var handlerWrapper = (IHandlerWrapper<TResponse>)cachedHandler;
 
-            var behaviorWrapper = (IBehaviorWrapper<TResponse>)_behaviorWrappers.GetOrAdd(requestType, t =>
-                Activator.CreateInstance(
-                    typeof(BehaviorWrapper<,>).MakeGenericType(t, typeof(TResponse)))!);
+            if (!_behaviorWrappers.TryGetValue(requestType, out var cachedBehavior))
+            {
+                cachedBehavior = _behaviorWrappers.GetOrAdd(requestType,
+                    t => CreateWrapper<object>(typeof(BehaviorWrapper<,>), t, typeof(TResponse)));
+            }
+            var behaviorWrapper = (IBehaviorWrapper<TResponse>)cachedBehavior;
 
             return behaviorWrapper.ExecutePipeline(
                 request,
@@ -46,12 +58,33 @@ namespace Light.Mediator
                 handlerWrapper.Handle(request, _serviceProvider, ct);
         }
 
-        public Task Publish(INotification notification, CancellationToken cancellationToken = default)
+        public Task Publish(
+            INotification notification,
+            CancellationToken cancellationToken = default)
         {
-            var wrapper = _notificationWrappers.GetOrAdd(notification.GetType(), t =>
-                (INotificationHandlerWrapper)Activator.CreateInstance(typeof(NotificationHandlerWrapper<>).MakeGenericType(t))!);
+            if (notification == null)
+                throw new ArgumentNullException(nameof(notification));
+
+            var notificationType = notification.GetType();
+
+            if (!_notificationWrappers.TryGetValue(notificationType, out var wrapper))
+            {
+                wrapper = _notificationWrappers.GetOrAdd(notificationType,
+                    t => CreateWrapper<INotificationHandlerWrapper>(
+                        typeof(NotificationHandlerWrapper<>), t));
+            }
 
             return wrapper.Publish(notification, _serviceProvider, cancellationToken);
+        }
+
+        private static T CreateWrapper<T>(Type openGenericType, params Type[] typeArgs)
+        {
+            var closedType = openGenericType.MakeGenericType(typeArgs);
+            var instance = Activator.CreateInstance(closedType);
+            if (instance == null)
+                throw new InvalidOperationException(
+                    $"Failed to create wrapper instance of {closedType.FullName}.");
+            return (T)instance;
         }
     }
 }

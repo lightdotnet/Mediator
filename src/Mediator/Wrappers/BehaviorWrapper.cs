@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Linq;
 using System.Threading;
@@ -26,10 +26,17 @@ namespace Light.Mediator.Wrappers
         {
             var behaviors = sp.GetServices<IPipelineBehavior<TRequest, TResponse>>();
 
-            RequestHandlerDelegate<TResponse> pipeline = finalHandler;
+            var array = behaviors is IPipelineBehavior<TRequest, TResponse>[] a
+                ? a
+                : behaviors.ToArray();
 
-            foreach (var behavior in behaviors.Reverse())
+            if (array.Length == 0)
+                return finalHandler(ct);
+
+            RequestHandlerDelegate<TResponse> pipeline = finalHandler;
+            for (int i = array.Length - 1; i >= 0; i--)
             {
+                var behavior = array[i];
                 var next = pipeline;
                 pipeline = c => behavior.Handle((TRequest)request, next, c);
             }

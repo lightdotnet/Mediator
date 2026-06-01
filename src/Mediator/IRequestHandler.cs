@@ -1,4 +1,4 @@
-﻿using System.Threading;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Light.Mediator
@@ -7,5 +7,11 @@ namespace Light.Mediator
         where TRequest : IRequest<TResponse>
     {
         Task<TResponse> Handle(TRequest request, CancellationToken cancellationToken);
+    }
+
+    public interface IRequestHandler<in TRequest>
+        where TRequest : IRequest<Unit>
+    {
+        Task Handle(TRequest request, CancellationToken cancellationToken);
     }
 }

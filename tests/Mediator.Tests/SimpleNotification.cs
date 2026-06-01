@@ -1,4 +1,4 @@
-﻿using Light.Mediator;
+using Light.Mediator;
 
 namespace Mediator.Tests;
 

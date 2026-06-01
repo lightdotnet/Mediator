@@ -1,4 +1,4 @@
-﻿using System.Threading;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Light.Mediator
@@ -13,4 +13,8 @@ namespace Light.Mediator
             RequestHandlerDelegate<TResponse> next,
             CancellationToken cancellationToken);
     }
+
+    public interface IPipelineBehavior<TRequest> : IPipelineBehavior<TRequest, Unit>
+        where TRequest : IRequest<Unit>
+    { }
 }

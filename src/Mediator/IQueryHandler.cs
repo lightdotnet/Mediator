@@ -1,4 +1,4 @@
-﻿namespace Light.Mediator
+namespace Light.Mediator
 {
     public interface IQueryHandler<in TRequest, TResponse>
         : IRequestHandler<TRequest, TResponse>
