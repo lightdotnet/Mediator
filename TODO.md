@@ -4,9 +4,8 @@ Tracked findings and follow-ups from code review. Not yet implemented — check 
 
 ## Bugs to fix
 
-- [ ] **`AddBehaviors` silently drops a behavior's other closed interfaces** — [src/Mediator/ServiceCollectionExtensions.cs:90-95](src/Mediator/ServiceCollectionExtensions.cs#L90-L95)
-  If a single class implements `IPipelineBehavior<,>` for two different closed requests (e.g. `IPipelineBehavior<CreateOrder,int>` and `IPipelineBehavior<DeleteOrder>` on the same type), `FirstOrDefault` registers only whichever interface `GetInterfaces()` happens to return first — the other is silently ignored, with no error. `GetInterfaces()` order isn't a documented contract.
-  **Fix:** enumerate all matching closed `IPipelineBehavior<,>` interfaces with `.Where(...)` and register a `ServiceDescriptor` for each, instead of `FirstOrDefault` + single `Add`.
+- [x] **`AddBehaviors` silently drops a behavior's other closed interfaces** — [src/Mediator/ServiceCollectionExtensions.cs:94-114](src/Mediator/ServiceCollectionExtensions.cs#L94-L114)
+  Fixed: replaced `FirstOrDefault` with `.Where(...).ToArray()`, throwing only if none match, and looping over every closed `IPipelineBehavior<,>` interface the type implements (each still going through the per-interface duplicate-registration guard). Verified by `AddBehaviors_ClosedTypeImplementingMultipleInterfaces_RegistersAll` — a `MultiInterfaceBehavior` implementing `IPipelineBehavior<PingRequest,PongResponse>` and `IPipelineBehavior<DeleteOrder>` against a real `ServiceCollection`, dispatching both request types and asserting both behavior methods ran.
 
 - [x] **`AddBehaviors` has no duplicate-registration protection** — [src/Mediator/ServiceCollectionExtensions.cs:81-109](src/Mediator/ServiceCollectionExtensions.cs#L81-L109)
   Fixed: both the open- and closed-generic branches now guard `services.Add(...)` with `!services.Any(d => d.ServiceType == X && d.ImplementationType == behaviorType)`, mirroring the existing notification-handler duplicate guard in `AddMediatorFromAssemblies`. Verified by `ServiceCollectionExtensionsTests` (real `ServiceCollection`, not `FakeServiceProvider`) covering: same open-generic type registered twice → runs once; same closed type registered twice → runs once; two distinct open-generic types → both still run.
@@ -14,8 +13,7 @@ Tracked findings and follow-ups from code review. Not yet implemented — check 
 
 ## Test coverage gaps
 
-- [x] No tests exercised `AddBehaviors` or `AddMediatorFromAssemblies` against a real `IServiceCollection`/`ServiceProvider` — this is why the two bugs above weren't caught. `tests/Mediator.Tests/ServiceCollectionExtensionsTests.cs` now covers both extension methods against a real `ServiceCollection`/`BuildServiceProvider()`, resolving `IMediator` and dispatching through `Send` (duplicate `AddBehaviors` calls, both open- and closed-generic).
-- [ ] Still missing: a case with a closed behavior implementing **multiple** `IPipelineBehavior<,>` interfaces — blocked on fixing bug #1 above first (`FirstOrDefault` currently drops all but one, so a test for the intended multi-interface behavior would fail until that's fixed).
+- [x] No tests exercised `AddBehaviors` or `AddMediatorFromAssemblies` against a real `IServiceCollection`/`ServiceProvider` — this is why the bugs above weren't caught. `tests/Mediator.Tests/ServiceCollectionExtensionsTests.cs` now covers both extension methods against a real `ServiceCollection`/`BuildServiceProvider()`, resolving `IMediator` and dispatching through `Send` (duplicate `AddBehaviors` calls for both open- and closed-generic, and a closed behavior implementing multiple `IPipelineBehavior<,>` interfaces).
 
 ## Design nits (low priority, not worth fixing proactively)
 

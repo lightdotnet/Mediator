@@ -91,20 +91,26 @@ namespace Light.Mediator
                 }
                 else
                 {
-                    var closedInterface = behaviorType
+                    var closedInterfaces = behaviorType
                         .GetInterfaces()
-                        .FirstOrDefault(i => i.IsGenericType &&
+                        .Where(i => i.IsGenericType &&
                             i.GetGenericTypeDefinition() == typeof(IPipelineBehavior<,>))
-                        ?? throw new ArgumentException(
+                        .ToArray();
+
+                    if (closedInterfaces.Length == 0)
+                        throw new ArgumentException(
                             $"{behaviorType.Name} does not implement IPipelineBehavior<,>.");
 
-                    if (!services.Any(d => d.ServiceType == closedInterface
-                                        && d.ImplementationType == behaviorType))
+                    foreach (var closedInterface in closedInterfaces)
                     {
-                        services.Add(new ServiceDescriptor(
-                            closedInterface,
-                            behaviorType,
-                            ServiceLifetime.Transient));
+                        if (!services.Any(d => d.ServiceType == closedInterface
+                                            && d.ImplementationType == behaviorType))
+                        {
+                            services.Add(new ServiceDescriptor(
+                                closedInterface,
+                                behaviorType,
+                                ServiceLifetime.Transient));
+                        }
                     }
                 }
             }

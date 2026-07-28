@@ -42,6 +42,25 @@ public class ClosedCountingBehavior : IPipelineBehavior<PingRequest, PongRespons
     }
 }
 
+public class MultiInterfaceBehavior : IPipelineBehavior<PingRequest, PongResponse>, IPipelineBehavior<DeleteOrder>
+{
+    private readonly List<string> _log;
+    public MultiInterfaceBehavior(List<string> log) => _log = log;
+
+    public Task<PongResponse> Handle(
+        PingRequest request, RequestHandlerDelegate<PongResponse> next, CancellationToken ct)
+    {
+        _log.Add("Ping");
+        return next(ct);
+    }
+
+    public Task<Unit> Handle(DeleteOrder request, RequestHandlerDelegate<Unit> next, CancellationToken ct)
+    {
+        _log.Add("Delete");
+        return next(ct);
+    }
+}
+
 [TestFixture]
 public class ServiceCollectionExtensionsTests
 {
@@ -88,5 +107,20 @@ public class ServiceCollectionExtensionsTests
         await mediator.Send(new PingRequest("hi"));
 
         Assert.ShouldHaveCount(log, 2);
+    }
+
+    [Test]
+    public async Task AddBehaviors_ClosedTypeImplementingMultipleInterfaces_RegistersAll()
+    {
+        var log = new List<string>();
+        var provider = BuildProvider(log, typeof(MultiInterfaceBehavior));
+        var mediator = provider.GetRequiredService<IMediator>();
+
+        await mediator.Send(new PingRequest("hi"));
+        await mediator.Send(new DeleteOrder(1));
+
+        Assert.ShouldHaveCount(log, 2);
+        Assert.ShouldBe(log[0], "Ping");
+        Assert.ShouldBe(log[1], "Delete");
     }
 }
