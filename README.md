@@ -209,9 +209,11 @@ builder.Services.AddMediatorFromAssemblies(
 ```csharp
 builder.Services.AddBehaviors(
     typeof(LoggingBehavior<,>),          // open generic
-    typeof(DeleteAuditBehavior)          // closed — AddBehaviors auto-detects IPipelineBehavior<,> interface
+    typeof(DeleteAuditBehavior)          // closed — auto-detects every IPipelineBehavior<,> interface it implements
 );
 ```
+
+Re-registering the exact same behavior type (same service interface + implementation pair) is a no-op, so calling `AddBehaviors` more than once for the same type — e.g. from two separate composition modules — won't double up the pipeline.
 
 ## 🛡️ Error Handling
 
