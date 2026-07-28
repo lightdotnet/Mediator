@@ -14,6 +14,7 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddMediatorFromAssemblies(Assembly.GetExecutingAssembly());
 builder.Services.AddBehaviors(typeof(LoggingBehavior<,>));
+//builder.Services.AddBehaviors(typeof(LoggingBehavior<,>));
 builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(TestBehavior<,>));
 //builder.Services.AddScoped<IPipelineBehavior<DeleteByIdCommand, Unit>, DeleteByIdBehavior>();
 builder.Services.AddBehaviors(typeof(DeleteByIdBehavior));
