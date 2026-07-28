@@ -14,7 +14,8 @@ Tracked findings and follow-ups from code review. Not yet implemented — check 
 
 ## Test coverage gaps
 
-- [ ] No tests exercise `AddBehaviors` or `AddMediatorFromAssemblies` against a real `IServiceCollection`/`ServiceProvider` — `tests/Mediator.Tests` only tests dispatch logic via `FakeServiceProvider`, which bypasses these extension methods entirely. This is why the two bugs above weren't caught. Add a fixture that builds a real `ServiceCollection`, calls both extension methods, and resolves from the built provider — including a case with duplicate `AddBehaviors` calls and a case with a multi-interface closed behavior.
+- [x] No tests exercised `AddBehaviors` or `AddMediatorFromAssemblies` against a real `IServiceCollection`/`ServiceProvider` — this is why the two bugs above weren't caught. `tests/Mediator.Tests/ServiceCollectionExtensionsTests.cs` now covers both extension methods against a real `ServiceCollection`/`BuildServiceProvider()`, resolving `IMediator` and dispatching through `Send` (duplicate `AddBehaviors` calls, both open- and closed-generic).
+- [ ] Still missing: a case with a closed behavior implementing **multiple** `IPipelineBehavior<,>` interfaces — blocked on fixing bug #1 above first (`FirstOrDefault` currently drops all but one, so a test for the intended multi-interface behavior would fail until that's fixed).
 
 ## Design nits (low priority, not worth fixing proactively)
 

@@ -40,7 +40,7 @@ Publishing to NuGet.org is a manual `workflow_dispatch` GitHub Action (`.github/
 
 - `src/Mediator.Contracts` — zero-dependency contracts (`IRequest<T>`, `ICommand`, `IQuery<T>`, `INotification`, `Unit`), targets `netstandard2.0`. Meant to be referenced alone by shared/domain projects that only need to declare requests/handlers' shapes.
 - `src/Mediator` — core implementation + DI registration, targets `netstandard2.1`, depends on `Mediator.Contracts` and `Microsoft.Extensions.DependencyInjection.Abstractions`.
-- `tests/Mediator.Tests` — NUnit tests (net10.0), uses a custom `Assert` helper class (`ShouldBe`, `ShouldThrowAsync`, etc. in `Assert.cs`) instead of calling `NUnit.Framework.Assert` directly — follow this convention in new tests. Uses a `FakeServiceProvider` rather than a real DI container/mocking library.
+- `tests/Mediator.Tests` — NUnit tests (net10.0), uses a custom `Assert` helper class (`ShouldBe`, `ShouldThrowAsync`, etc. in `Assert.cs`) instead of calling `NUnit.Framework.Assert` directly — follow this convention in new tests. Dispatch/pipeline tests use a hand-rolled `FakeServiceProvider` rather than a mocking library; `ServiceCollectionExtensionsTests.cs` is the exception — it exercises `AddMediatorFromAssemblies`/`AddBehaviors` against a real `ServiceCollection`/`BuildServiceProvider()`, which is necessary since a real container enforces registration rules (e.g. rejecting an open-generic implementation type) that `FakeServiceProvider` doesn't validate.
 - `samples/WebApi` — ASP.NET Core sample demonstrating vertical-slice-style feature folders (`IdFeatures/Add`, `Get`, `Update`, `Delete`, `Events`) with behaviors.
 
 Both `src` projects have `GeneratePackageOnBuild=True`, so every build also produces a `.nupkg`.
