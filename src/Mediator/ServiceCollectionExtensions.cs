@@ -27,7 +27,7 @@ namespace Light.Mediator
 
             var concreteTypes = assemblies
                 .SelectMany(GetLoadableTypes)
-                .Where(t => !t.IsAbstract && !t.IsInterface);
+                .Where(t => !t.IsAbstract && !t.IsInterface && !t.IsGenericTypeDefinition);
 
             foreach (var type in concreteTypes)
             {
@@ -80,10 +80,14 @@ namespace Light.Mediator
 
                 if (behaviorType.IsGenericTypeDefinition)
                 {
-                    services.Add(new ServiceDescriptor(
-                        typeof(IPipelineBehavior<,>),
-                        behaviorType,
-                        ServiceLifetime.Transient));
+                    if (!services.Any(d => d.ServiceType == typeof(IPipelineBehavior<,>)
+                                        && d.ImplementationType == behaviorType))
+                    {
+                        services.Add(new ServiceDescriptor(
+                            typeof(IPipelineBehavior<,>),
+                            behaviorType,
+                            ServiceLifetime.Transient));
+                    }
                 }
                 else
                 {
@@ -94,10 +98,14 @@ namespace Light.Mediator
                         ?? throw new ArgumentException(
                             $"{behaviorType.Name} does not implement IPipelineBehavior<,>.");
 
-                    services.Add(new ServiceDescriptor(
-                        closedInterface,
-                        behaviorType,
-                        ServiceLifetime.Transient));
+                    if (!services.Any(d => d.ServiceType == closedInterface
+                                        && d.ImplementationType == behaviorType))
+                    {
+                        services.Add(new ServiceDescriptor(
+                            closedInterface,
+                            behaviorType,
+                            ServiceLifetime.Transient));
+                    }
                 }
             }
 
