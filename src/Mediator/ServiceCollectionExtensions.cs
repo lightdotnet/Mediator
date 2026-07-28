@@ -27,7 +27,7 @@ namespace Light.Mediator
 
             var concreteTypes = assemblies
                 .SelectMany(GetLoadableTypes)
-                .Where(t => !t.IsAbstract && !t.IsInterface);
+                .Where(t => !t.IsAbstract && !t.IsInterface && !t.IsGenericTypeDefinition);
 
             foreach (var type in concreteTypes)
             {
@@ -80,24 +80,38 @@ namespace Light.Mediator
 
                 if (behaviorType.IsGenericTypeDefinition)
                 {
-                    services.Add(new ServiceDescriptor(
-                        typeof(IPipelineBehavior<,>),
-                        behaviorType,
-                        ServiceLifetime.Transient));
+                    if (!services.Any(d => d.ServiceType == typeof(IPipelineBehavior<,>)
+                                        && d.ImplementationType == behaviorType))
+                    {
+                        services.Add(new ServiceDescriptor(
+                            typeof(IPipelineBehavior<,>),
+                            behaviorType,
+                            ServiceLifetime.Transient));
+                    }
                 }
                 else
                 {
-                    var closedInterface = behaviorType
+                    var closedInterfaces = behaviorType
                         .GetInterfaces()
-                        .FirstOrDefault(i => i.IsGenericType &&
+                        .Where(i => i.IsGenericType &&
                             i.GetGenericTypeDefinition() == typeof(IPipelineBehavior<,>))
-                        ?? throw new ArgumentException(
+                        .ToArray();
+
+                    if (closedInterfaces.Length == 0)
+                        throw new ArgumentException(
                             $"{behaviorType.Name} does not implement IPipelineBehavior<,>.");
 
-                    services.Add(new ServiceDescriptor(
-                        closedInterface,
-                        behaviorType,
-                        ServiceLifetime.Transient));
+                    foreach (var closedInterface in closedInterfaces)
+                    {
+                        if (!services.Any(d => d.ServiceType == closedInterface
+                                            && d.ImplementationType == behaviorType))
+                        {
+                            services.Add(new ServiceDescriptor(
+                                closedInterface,
+                                behaviorType,
+                                ServiceLifetime.Transient));
+                        }
+                    }
                 }
             }
 
