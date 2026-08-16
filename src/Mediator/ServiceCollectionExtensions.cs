@@ -20,6 +20,12 @@ namespace Light.Mediator
                 throw new ArgumentException(
                     "At least one assembly must be provided.", nameof(assemblies));
 
+            foreach (var assembly in assemblies)
+            {
+                if (assembly == null)
+                    throw new ArgumentNullException(nameof(assemblies), "Assembly cannot be null.");
+            }
+
             services.TryAddTransient<Mediator>();
             services.TryAddTransient<IMediator>(sp => sp.GetRequiredService<Mediator>());
             services.TryAddTransient<ISender>(sp => sp.GetRequiredService<Mediator>());
@@ -80,6 +86,15 @@ namespace Light.Mediator
 
                 if (behaviorType.IsGenericTypeDefinition)
                 {
+                    var implementsPipelineBehavior = behaviorType
+                        .GetInterfaces()
+                        .Any(i => i.IsGenericType
+                               && i.GetGenericTypeDefinition() == typeof(IPipelineBehavior<,>));
+
+                    if (!implementsPipelineBehavior)
+                        throw new ArgumentException(
+                            $"{behaviorType.Name} does not implement IPipelineBehavior<,>.");
+
                     if (!services.Any(d => d.ServiceType == typeof(IPipelineBehavior<,>)
                                         && d.ImplementationType == behaviorType))
                     {

@@ -11,7 +11,7 @@ namespace Light.Mediator.Wrappers
         Task<TResponse> ExecutePipeline(
             IRequest<TResponse> request,
             IServiceProvider sp,
-            RequestHandlerDelegate<TResponse> finalHandler,
+            IHandlerWrapper<TResponse> handler,
             CancellationToken ct);
     }
 
@@ -21,7 +21,7 @@ namespace Light.Mediator.Wrappers
         public Task<TResponse> ExecutePipeline(
             IRequest<TResponse> request,
             IServiceProvider sp,
-            RequestHandlerDelegate<TResponse> finalHandler,
+            IHandlerWrapper<TResponse> handler,
             CancellationToken ct)
         {
             var behaviors = sp.GetServices<IPipelineBehavior<TRequest, TResponse>>();
@@ -31,9 +31,9 @@ namespace Light.Mediator.Wrappers
                 : behaviors.ToArray();
 
             if (array.Length == 0)
-                return finalHandler(ct);
+                return handler.Handle(request, sp, ct);
 
-            RequestHandlerDelegate<TResponse> pipeline = finalHandler;
+            RequestHandlerDelegate<TResponse> pipeline = c => handler.Handle(request, sp, c);
             for (int i = array.Length - 1; i >= 0; i--)
             {
                 var behavior = array[i];
