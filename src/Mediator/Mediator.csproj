@@ -10,7 +10,7 @@
 	<Authors>minhvu</Authors>
 	<Description>Package containing Mediator implements.</Description>
 	<Summary>Package containing Mediator implements.</Summary>
-	<Version>1.2.1.0</Version>
+	<Version>1.2.1.1</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<PackageReleaseNotes></PackageReleaseNotes>

@@ -12,3 +12,13 @@ Accept: application/json
 
 GET {{WebApi_HostAddress}}/flows
 Accept: application/json
+
+###
+
+GET {{WebApi_HostAddress}}/new-int-id
+Accept: application/json
+
+###
+
+GET {{WebApi_HostAddress}}/new-string-id
+Accept: application/json
