@@ -25,7 +25,16 @@ namespace Light.Mediator.Wrappers
                 {
                     await handler.Handle((TNotification)notification, ct).ConfigureAwait(false);
                 }
-                catch (Exception ex) when (!(ex is OperationCanceledException))
+                catch (OperationCanceledException oce)
+                {
+                    if (exceptions == null || exceptions.Count == 0)
+                        throw;
+
+                    exceptions.Add(oce);
+                    throw new AggregateException(
+                        "One or more notification handlers failed before cancellation.", exceptions);
+                }
+                catch (Exception ex)
                 {
                     if (exceptions == null)
                         exceptions = new List<Exception>();

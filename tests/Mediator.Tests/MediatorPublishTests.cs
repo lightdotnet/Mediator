@@ -106,4 +106,23 @@ public class MediatorPublishTests
             () => mediator.Publish(new SimpleNotification("test")));
         Assert.ShouldHaveCount(tracking.Messages, 0);
     }
+
+    [Test]
+    public void Publish_HandlerThrowsThenLaterHandlerCancels_AggregateExceptionContainsBoth()
+    {
+        var throwing = new ThrowingNotificationHandler();
+        var cancelling = new CancellingNotificationHandler();
+        var tracking = new TrackingNotificationHandler();
+        var provider = new FakeServiceProvider()
+            .Register<INotificationHandler<SimpleNotification>>(throwing)
+            .Register<INotificationHandler<SimpleNotification>>(cancelling)
+            .Register<INotificationHandler<SimpleNotification>>(tracking);
+        var mediator = new MediatorClass(provider);
+        var ex = Assert.ShouldThrowAsync<AggregateException>(
+            () => mediator.Publish(new SimpleNotification("test")));
+        Assert.ShouldHaveCount(ex.InnerExceptions, 2);
+        Assert.ShouldBeOfType<InvalidOperationException>(ex.InnerExceptions[0]);
+        Assert.ShouldBeOfType<OperationCanceledException>(ex.InnerExceptions[1]);
+        Assert.ShouldHaveCount(tracking.Messages, 0);
+    }
 }
