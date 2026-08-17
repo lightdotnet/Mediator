@@ -10,10 +10,16 @@
 	<Authors>minhvu</Authors>
 	<Description>Package containing Mediator implements.</Description>
 	<Summary>Package containing Mediator implements.</Summary>
-	<Version>1.2.1.1</Version>
+	<Version>1.3.0</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
-	<PackageReleaseNotes></PackageReleaseNotes>
+	<PackageReleaseNotes>
+1.3.0:
+- AddBehaviors now validates that an open-generic behavior type implements IPipelineBehavior&lt;,&gt; before registering, instead of failing later with a confusing MakeGenericType exception during DI resolution.
+- AddMediatorFromAssemblies now throws ArgumentNullException for a null element in the assemblies array, instead of an unfriendly NullReferenceException.
+- Publish no longer silently drops an earlier notification handler's failure when a later handler is cancelled (OperationCanceledException/TaskCanceledException) mid-loop; buffered failures and the cancellation are now combined into a single AggregateException. Cancellation with no prior failures still propagates unchanged.
+- Send() no longer allocates a closure/delegate when no pipeline behaviors are registered, matching the documented zero-alloc fast path.
+	</PackageReleaseNotes>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	<PublishRepositoryUrl>true</PublishRepositoryUrl>
 	<EmbedUntrackedSources>true</EmbedUntrackedSources>

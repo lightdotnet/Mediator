@@ -19,13 +19,13 @@ A lightweight, high-performance mediator library for .NET — implementing the M
 ## 📦 Installation
 
 ```bash
-dotnet add package Light.Mediator
+dotnet add package Lightsoft.Mediator
 ```
 
 For projects that only define requests/commands/queries (e.g., shared contracts):
 
 ```bash
-dotnet add package Light.Mediator.Contracts
+dotnet add package Lightsoft.Mediator.Contracts
 ```
 
 ## 🚀 Quick Start
