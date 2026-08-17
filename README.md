@@ -238,20 +238,22 @@ Mediator.Contracts/          ← Pure contracts, zero dependencies
 └── Unit.cs                         Unit struct
 
 Mediator/                    ← Core + DI, depends on Contracts
+├── Adapters/                       Internal DI-constructed bridges
+│   └── VoidRequestHandlerAdapter.cs  Task→Task<Unit> bridge
 ├── Wrappers/                       Internal handler/behavior wrappers
 │   ├── BehaviorWrapper.cs
 │   ├── HandlerWrapper.cs
-│   ├── NotificationHandlerWrapper.cs
-│   └── VoidRequestHandlerAdapter.cs  Task→Task<Unit> bridge
+│   └── NotificationHandlerWrapper.cs
 ├── ICommandHandler.cs              ICommandHandler<T,R>, ICommandHandler<T>
 ├── IMediator.cs                    IMediator : ISender, IPublisher
 ├── INotificationHandler.cs         INotificationHandler<T>
-├── IPipelineBehavior.cs            IPipelineBehavior<T,R>, IPipelineBehavior<T>, delegate
+├── IPipelineBehavior.cs            IPipelineBehavior<T,R>, IPipelineBehavior<T>
 ├── IPublisher.cs                   IPublisher
 ├── IQueryHandler.cs                IQueryHandler<T,R>
 ├── IRequestHandler.cs              IRequestHandler<T,R>, IRequestHandler<T>
 ├── ISender.cs                      ISender
 ├── Mediator.cs                     Core mediator implementation
+├── RequestHandlerDelegate.cs       RequestHandlerDelegate<T> delegate
 └── ServiceCollectionExtensions.cs  DI registration extensions
 ```
 

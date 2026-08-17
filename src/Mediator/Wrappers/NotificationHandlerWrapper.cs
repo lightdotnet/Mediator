@@ -8,22 +8,22 @@ namespace Light.Mediator.Wrappers
 {
     internal interface INotificationHandlerWrapper
     {
-        Task Publish(INotification notification, IServiceProvider sp, CancellationToken ct);
+        Task Publish(INotification notification, IServiceProvider serviceProvider, CancellationToken cancellationToken);
     }
 
     internal class NotificationHandlerWrapper<TNotification> : INotificationHandlerWrapper
         where TNotification : INotification
     {
-        public async Task Publish(INotification notification, IServiceProvider sp, CancellationToken ct)
+        public async Task Publish(INotification notification, IServiceProvider serviceProvider, CancellationToken cancellationToken)
         {
-            var handlers = sp.GetServices<INotificationHandler<TNotification>>();
+            var handlers = serviceProvider.GetServices<INotificationHandler<TNotification>>();
             List<Exception>? exceptions = null;
 
             foreach (var handler in handlers)
             {
                 try
                 {
-                    await handler.Handle((TNotification)notification, ct).ConfigureAwait(false);
+                    await handler.Handle((TNotification)notification, cancellationToken).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException oce)
                 {
