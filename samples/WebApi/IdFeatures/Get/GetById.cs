@@ -2,9 +2,9 @@
 
 public class GetById
 {
-    public record Query(string Id) : ICommand<IdDto>;
+    public record Query(string Id) : IQuery<IdDto>;
 
-    internal class Handler : ICommandHandler<Query, IdDto>
+    internal class Handler : IQueryHandler<Query, IdDto>
     {
         public Task<IdDto> Handle(Query request, CancellationToken cancellationToken)
         {

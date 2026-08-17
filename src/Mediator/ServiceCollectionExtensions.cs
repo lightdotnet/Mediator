@@ -1,7 +1,8 @@
-using Light.Mediator.Wrappers;
+using Light.Mediator.Adapters;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
@@ -20,6 +21,12 @@ namespace Light.Mediator
                 throw new ArgumentException(
                     "At least one assembly must be provided.", nameof(assemblies));
 
+            foreach (var assembly in assemblies)
+            {
+                if (assembly == null)
+                    throw new ArgumentNullException(nameof(assemblies), "Assembly cannot be null.");
+            }
+
             services.TryAddTransient<Mediator>();
             services.TryAddTransient<IMediator>(sp => sp.GetRequiredService<Mediator>());
             services.TryAddTransient<ISender>(sp => sp.GetRequiredService<Mediator>());
@@ -28,6 +35,8 @@ namespace Light.Mediator
             var concreteTypes = assemblies
                 .SelectMany(GetLoadableTypes)
                 .Where(t => !t.IsAbstract && !t.IsInterface && !t.IsGenericTypeDefinition);
+
+            var registered = GetRegisteredPairs(services);
 
             foreach (var type in concreteTypes)
             {
@@ -50,8 +59,7 @@ namespace Light.Mediator
                     }
                     else if (def == typeof(INotificationHandler<>))
                     {
-                        if (!services.Any(d => d.ServiceType == iface
-                                            && d.ImplementationType == type))
+                        if (registered.Add((iface, type)))
                         {
                             services.AddTransient(iface, type);
                         }
@@ -72,6 +80,8 @@ namespace Light.Mediator
             if (behaviorTypes == null || behaviorTypes.Length == 0)
                 return services;
 
+            var registered = GetRegisteredPairs(services);
+
             foreach (var behaviorType in behaviorTypes)
             {
                 if (behaviorType == null)
@@ -80,8 +90,16 @@ namespace Light.Mediator
 
                 if (behaviorType.IsGenericTypeDefinition)
                 {
-                    if (!services.Any(d => d.ServiceType == typeof(IPipelineBehavior<,>)
-                                        && d.ImplementationType == behaviorType))
+                    var implementsPipelineBehavior = behaviorType
+                        .GetInterfaces()
+                        .Any(i => i.IsGenericType
+                               && i.GetGenericTypeDefinition() == typeof(IPipelineBehavior<,>));
+
+                    if (!implementsPipelineBehavior)
+                        throw new ArgumentException(
+                            $"{behaviorType.Name} does not implement IPipelineBehavior<,>.");
+
+                    if (registered.Add((typeof(IPipelineBehavior<,>), behaviorType)))
                     {
                         services.Add(new ServiceDescriptor(
                             typeof(IPipelineBehavior<,>),
@@ -103,8 +121,7 @@ namespace Light.Mediator
 
                     foreach (var closedInterface in closedInterfaces)
                     {
-                        if (!services.Any(d => d.ServiceType == closedInterface
-                                            && d.ImplementationType == behaviorType))
+                        if (registered.Add((closedInterface, behaviorType)))
                         {
                             services.Add(new ServiceDescriptor(
                                 closedInterface,
@@ -116,6 +133,15 @@ namespace Light.Mediator
             }
 
             return services;
+        }
+
+        private static HashSet<(Type ServiceType, Type ImplementationType)> GetRegisteredPairs(
+            IServiceCollection services)
+        {
+            return new HashSet<(Type, Type)>(
+                services
+                    .Where(d => d.ImplementationType != null)
+                    .Select(d => (d.ServiceType, d.ImplementationType!)));
         }
 
         private static Type[] GetLoadableTypes(Assembly assembly)

@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Light.Mediator.Wrappers
+namespace Light.Mediator.Adapters
 {
     internal class VoidRequestHandlerAdapter<TRequest> : IRequestHandler<TRequest, Unit>
         where TRequest : IRequest<Unit>

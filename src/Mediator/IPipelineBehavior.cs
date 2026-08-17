@@ -3,8 +3,6 @@ using System.Threading.Tasks;
 
 namespace Light.Mediator
 {
-    public delegate Task<TResponse> RequestHandlerDelegate<TResponse>(CancellationToken cancellationToken);
-
     public interface IPipelineBehavior<TRequest, TResponse>
         where TRequest : IRequest<TResponse>
     {

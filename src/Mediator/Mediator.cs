@@ -51,11 +51,8 @@ namespace Light.Mediator
             return behaviorWrapper.ExecutePipeline(
                 request,
                 _serviceProvider,
-                FinalHandler,
+                handlerWrapper,
                 cancellationToken);
-
-            Task<TResponse> FinalHandler(CancellationToken ct) =>
-                handlerWrapper.Handle(request, _serviceProvider, ct);
         }
 
         public Task Publish(

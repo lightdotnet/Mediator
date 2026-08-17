@@ -42,6 +42,10 @@ public class ClosedCountingBehavior : IPipelineBehavior<PingRequest, PongRespons
     }
 }
 
+public class NotAPipelineBehavior<TRequest, TResponse>
+{
+}
+
 public class MultiInterfaceBehavior : IPipelineBehavior<PingRequest, PongResponse>, IPipelineBehavior<DeleteOrder>
 {
     private readonly List<string> _log;
@@ -122,5 +126,35 @@ public class ServiceCollectionExtensionsTests
         Assert.ShouldHaveCount(log, 2);
         Assert.ShouldBe(log[0], "Ping");
         Assert.ShouldBe(log[1], "Delete");
+    }
+
+    [Test]
+    public async Task Send_VoidCommand_WithGenuinelyAsyncHandler_UsesAwaitedPath()
+    {
+        var log = new List<string>();
+        var provider = BuildProvider(log);
+        var mediator = provider.GetRequiredService<IMediator>();
+
+        var result = await mediator.Send(new ArchiveOrder(1));
+
+        Assert.ShouldBe(result, Unit.Value);
+    }
+
+    [Test]
+    public void AddBehaviors_OpenGenericNotImplementingPipelineBehavior_Throws()
+    {
+        var services = new ServiceCollection();
+
+        Assert.ShouldThrow<ArgumentException>(
+            () => services.AddBehaviors(typeof(NotAPipelineBehavior<,>)));
+    }
+
+    [Test]
+    public void AddMediatorFromAssemblies_NullAssemblyElement_ThrowsArgumentNullException()
+    {
+        var services = new ServiceCollection();
+
+        Assert.ShouldThrow<ArgumentNullException>(
+            () => services.AddMediatorFromAssemblies(typeof(PingHandler).Assembly, null!));
     }
 }

@@ -4,6 +4,7 @@ using WebApi.Behaviors;
 using WebApi.IdFeatures.Add;
 using WebApi.IdFeatures.Delete;
 using WebApi.IdFeatures.Get;
+using WebApi.IdFeatures.RequestsWithOneHandler;
 using WebApi.IdFeatures.Update;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -55,5 +56,17 @@ app.MapGet("/flows", async (IMediator mediator) =>
     return get;
 })
 .WithName("Flows");
+
+app.MapGet("/new-string-id", async (IMediator mediator) =>
+{
+    return await mediator.Send(new NewStringIdCommand());
+})
+.WithName("NewStringId");
+
+app.MapGet("/new-int-id", async (IMediator mediator) =>
+{
+    return await mediator.Send(new NewIntIdCommand());
+})
+.WithName("NewIntId");
 
 app.Run();
