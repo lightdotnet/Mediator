@@ -13,7 +13,7 @@ Each item is tagged with its blast radius:
 
 1. **[safe, already accepted — see below] Wrapper caches keyed only by request type, not `(RequestType, ResponseType)`.**
    `src/Mediator/Mediator.cs:37-49` (`_handlerWrappers`, `_behaviorWrappers`). Because `IRequest<out TResponse>` is covariant, a type implementing `IRequest<T>` for more than one `T` could hit a cached wrapper built for the wrong `TResponse`, throwing `InvalidCastException`.
-   **This is the same issue already documented in `TODO.md` under "Design nits (low priority, not worth fixing proactively)"** — it was previously reviewed and deliberately deprioritized (fails loudly via `InvalidCastException` rather than misbehaving silently; not worth the overhead of a composite-key cache to guard against a deliberately-contrived call pattern). Re-surfaced here for completeness; no new action implied unless revisited.
+   **This is the same issue already listed below under "Design nits (low priority, not worth fixing proactively)"** — it was previously reviewed and deliberately deprioritized (fails loudly via `InvalidCastException` rather than misbehaving silently; not worth the overhead of a composite-key cache to guard against a deliberately-contrived call pattern). Re-surfaced here for completeness; no new action implied unless revisited.
 
 2. **[decision needed] `NotificationHandlerWrapper.Publish` silently drops already-buffered exceptions when a later handler throws `OperationCanceledException`/`TaskCanceledException`.**
    `src/Mediator/Wrappers/NotificationHandlerWrapper.cs:22-38`. If handler #1 throws a normal exception (caught and buffered for the eventual `AggregateException`) and handler #2 subsequently throws `OperationCanceledException` (which bypasses the buffering catch filter), the OCE propagates immediately and handler #1's failure is lost — no `AggregateException` is ever thrown, so the caller never learns handler #1 failed.
@@ -65,3 +65,16 @@ For quick reference when deciding what's safe to touch:
 - **Public / breaking-if-renamed:** everything in `src/Mediator.Contracts` (`IRequest<>`, `ICommand<>`, `IQuery<>`, `INotification`, `Unit`), plus in `src/Mediator`: `IMediator`, `ISender`, `IPublisher`, `IRequestHandler<,>`/`IRequestHandler<>`, `ICommandHandler<,>`/`ICommandHandler<>`, `IQueryHandler<,>`, `INotificationHandler<>`, `IPipelineBehavior<,>`/`IPipelineBehavior<>`, `RequestHandlerDelegate<>`, the concrete `Mediator` class (registered directly under its own type via `TryAddTransient<Mediator>()` — not just exposed through interfaces), and both methods on `ServiceCollectionExtensions`.
 - **Internal / safe to rename freely:** everything under `src/Mediator/Wrappers/` (`BehaviorWrapper<,>`, `HandlerWrapper<,>`, `VoidRequestHandlerAdapter<>`, `NotificationHandlerWrapper<>`, and their internal wrapper interfaces), plus all private members of `Mediator.cs` and `ServiceCollectionExtensions.cs`.
 - No accidentally-public implementation details were found — everything that should be `internal` already is.
+
+## Design nits (low priority, not worth fixing proactively)
+
+*(merged from the former root-level `TODO.md`)*
+
+- Same item as #1 above: wrapper caches in `Mediator.cs` (`_handlerWrappers`, `_behaviorWrappers`) are keyed only by request runtime `Type`, not `(Type, TResponse)`. Because `IRequest<out TResponse>` is covariant, dispatching the same concrete request type through two different `Send<TResponse>()` static-type instantiations (only possible by deliberately widening the static type) could hit a cached wrapper built for the wrong `TResponse` — it throws `InvalidCastException` rather than misbehaving silently, so this is safe but slightly surprising. Not worth adding overhead to guard against; documenting here in case it ever needs revisiting.
+
+## Reviewed and confirmed correct (no action needed)
+
+- `Mediator.cs` wrapper caching (`TryGetValue` before `GetOrAdd`) and delegate-allocation behavior.
+- `BehaviorWrapper.ExecutePipeline`'s zero-behaviors fast path and array-vs-`ToArray()` check.
+- `NotificationHandlerWrapper`'s `AggregateException`-collection / cancellation-propagation semantics.
+- `VoidRequestHandlerAdapter`'s `IsCompletedSuccessfully` synchronous short-circuit.
